@@ -127,3 +127,22 @@ hosts: This is the hostname associated with the service being requested; in this
 
 ### Exposing Ingress over HTTPS
 
+Create CA
+openssl req -x509 -sha256 -nodes -days 365 -newkey rsa:2048 -subj '/O=Sockshop Inc./CN=Sockshop.inc' -keyout Sockshop.inc.key -out Sockshop.inc.crt
+
+Create CSR and key
+
+$openssl req -out sockshop.com.csr -newkey rsa:2048 -nodes -keyout sockshop.com.key -subj "/CN=sockshop.com/O=sockshop.inc"
+
+Sign the CSR
+
+$openssl x509 -req -sha256 -days 365 -CA Sockshop.inc.crt -CAkey Sockshop.inc.key -set_serial 0 -in sockshop.com.csr -out sockshop.com.crt
+
+Add the secret to the istio
+
+kubectl create -n istio-system secret tls sockshop-credential --key=sockshop.com.key --cert=sockshop.com.crt
+
+
+curl -v -k -HHost:sockshop.com --resolve  "sockshop.com:32431:192.168.59.100" https://sockshop.com:32431
+    for minikube we need to use minikube ip, then the port mapped to the 443 for the ingress gateway
+
