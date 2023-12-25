@@ -81,4 +81,49 @@ Now we will create another virtual host to select between the 2 versions
 
     curl -H "Host: mockshop.com" http://10.108.141.169 <IP OF THE LoadBalancer istio>
 
+Clear the work
+  
+      kubectl delete -f 4b-istio-gateway.yaml
+      kubectl delete -f nginx.yaml
 ![istio-mirroring-explain.png](../images/istio-mirroring-explain.png)
+
+
+### Routing traffic to service outside of the cluster.
+
+    When you need to communicate with services outside the mesh you need to 
+    tell istio where to find them. You can do this by creating a service entry.
+
+```yaml
+
+apiVersion: networking.istio.io/v1alpha3
+kind: ServiceEntry
+metadata:
+  name: httpbin-svc
+  namespace: chapter4
+spec:
+  hosts:
+  - httpbin.org
+  location: MESH_EXTERNAL
+  ports:
+  - number: 80
+    name: httpbin
+    protocol: http
+  resolution: DNS
+
+```
+In the ServiceEntry declaration, the following configurations are defined:
+
+resolution: Here, we define how the hostname should be resolved; the following are the possible values:
+DNS: Makes use of available DNS to resolve the hostname
+DNS_ROUND_ROBBIN: In this case, the first resolved address is used
+NONE: No DNS resolution is required; the destination is specified in form of an IP address
+STATIC: Uses a static endpoint against the hostnames
+location: The service entry location is used to specify whether the requested service is part of the mesh or outside the mesh. Possible values are MESH_EXTERNAL and MESH_INTERNAL.
+hosts: This is the hostname associated with the service being requested; in this example, the host is httpbin.org. The host field in ServiceEntry is matched with host fields specified in virtual service and destination rules.
+
+    kubectl apply -f 5a-istio-service-entry.yaml
+
+    curl -H "Host: mockshop.com" http://10.108.141.169/get
+
+### Exposing Ingress over HTTPS
+
