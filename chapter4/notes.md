@@ -146,3 +146,46 @@ kubectl create -n istio-system secret tls sockshop-credential --key=sockshop.com
 curl -v -k -HHost:sockshop.com --resolve  "sockshop.com:32431:192.168.59.100" https://sockshop.com:32431
     for minikube we need to use minikube ip, then the port mapped to the 443 for the ingress gateway
 
+kubectl delete -f 6-istio-gateway.yaml
+
+#### Redirect http to https
+
+For testing we use the nodePort of the minikube ip and the port 80 of the istio-ingressgateway
+
+curl -v -k -HHost:sockshop.com --resolve  "sockshop.com:31672:192.168.59.100" http://sockshop.com:31672
+
+for cloud
+
+curl -v -HHost:mockshop.com --connect-to "mockshop.com:443:a816bb2638a5e4a8c990ce790b47d429-1565783620.us-east-1.elb.amazonaws.com" --cacert Sockshop.inc.crt  https://mockshop.com/
+
+
+kubectl apply -f 7-istio-gateway.yaml
+
+### Enabling HTTPS for multiple hosts
+openssl req -out mockshop.com.csr -newkey rsa:2048 -nodes -keyout mockshop.com.key -subj "/CN=mockshop.com/O=mockshop.inc"
+openssl x509 -req -sha256 -days 365 -CA Sockshop.inc.crt -CAkey Sockshop.inc.key -set_serial 0 -in mockshop.com.csr -out mockshop.com.crt
+kubectl create -n istio-system secret tls mockshop-credential --key=mockshop.com.key --cert=mockshop.com.crt
+
+curl -v -HHost:sockshop.com --resolve "sockshop.com:32431:192.168.59.100" --cacert Sockshop.inc.crt https://sockshop.com:32431/
+
+curl -v -HHost:mockshop.com --resolve "mockshop.com:32431:192.168.59.100" --cacert Sockshop.inc.crt  https://mockshop.com:32431/
+
+Remember the CA handler for the certificates!!!!
+
+kubectl apply -f 8-istio-gateway.yaml
+
+### Enablind HTTPS for CNAM and wilcards records
+
+openssl req -out sni.sockshop.com.csr -newkey rsa:2048 -nodes -keyout sni.sockshop.com.key -subj "/CN=*.sockshop.com/O=sockshop.inc"
+
+
+Sign with the CA
+openssl x509 -req -sha256 -days 365 -CA Sockshop.inc.crt -CAkey Sockshop.inc.key -set_serial 0 -in sni.sockshop.com.csr -out sni.sockshop.com.crt
+
+Add to the istio-system namespace
+
+kubectl create -n istio-system secret tls sni-sockshop-credential --key=sni.sockshop.com.key --cert=sni.sockshop.com.crt
+
+kubectl apply -f 9-istio-gateway.yaml
+
+curl -v -HHost:my.sockshop.com --resolve "my.sockshop.com:32431:192.168.59.100" --cacert Sockshop.inc.crt  https://my.sockshop.com:32431
