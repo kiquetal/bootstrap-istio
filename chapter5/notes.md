@@ -17,8 +17,9 @@ spec:
   gateways:
     - mesh
   http:
-  - match:
-    - uri:
+  - name: "catalogue"
+    match:
+     - uri:
         prefix: /catalogue
     fault:
       delay:
@@ -32,8 +33,10 @@ spec:
         host: catalogue.sock-shop.svc.cluster.local
         port:
           number: 80
-  - destination:
-      host: catalogue.sock-shop.svc.cluster.local
-      port:
-        number: 80 
+  - name: default
+    route:
+    - destination:
+        host: catalogue.sock-shop.svc.cluster.local
+        port:
+          number: 80
 ```
