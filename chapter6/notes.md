@@ -58,3 +58,4 @@ we execute the previous curl now,the response is
   "url": "http://httpbin.chapter6.svc.cluster.local:8000/get"
 }
 ```
+jq -r '.. |."secret"?' | jq -r 'select(.name == "default")' | jq -r '.tls_certificate.certificate_chain.inline_bytes' | base64 -d - | step certificate inspect  --short
