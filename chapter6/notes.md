@@ -59,3 +59,46 @@ we execute the previous curl now,the response is
 }
 ```
 jq -r '.. |."secret"?' | jq -r 'select(.name == "default")' | jq -r '.tls_certificate.certificate_chain.inline_bytes' | base64 -d - | step certificate inspect  --short
+
+
+#### Authentication outside the mesh
+
+- We'll create the ca, for mtls between the client and ingress gateway
+
+```bash
+
+#Create CA
+
+openssl req -x509 -sha256 -nodes -days 365 -newkey rsa:2048 -subj '/O=Sockshop Inc./CN=sock.inc' -keyout sock.inc.key -out sock.inc.crt
+
+
+#Create CSR and key for the pod
+
+openssl req -out httpbin.org.csr -newkey rsa:2048 -nodes -keyout httpbin.org.key -subj "/CN=httpbing.org/O=sockshop.inc"
+
+
+# Sign the CSR
+
+openssl x509 -req -sha256 -days 365 -CA sock.inc.crt -CAkey sock.inc.key -set_serial 0 -in httpbin.org.csr -out httpbin.org.crt
+
+
+# Add the secret to the istio
+
+kubectl create -n istio-system secret tls httpbin-credential --from-file=tls.crt=httpbin.org.crt --from-file=tls.key=httpbin.org.key --from-file=ca.crt=sock.inc.crt
+
+# Create the client to test the connection
+
+openssl req -out bootcamp.com.csr -newkey rsa:2048 -nodes -keyout bootcamp.com.key -subj "/CN=bootcamp.com/O=bootcamp.inc"
+
+# Sign the CSR
+
+openssl x509 -req -sha256 -days 365 -CA sock.inc.crt -CAkey sock.inc.key -set_serial 0 -in bootcamp.com.csr -out bootcamp.com.crt
+
+# Test the connection using the gateway, the client and the httpbin
+
+curl -v -HHost:httpbin.org --connect-to "httpbin.org:32431:192.168.59.100" --cacert sock.inc.crt  --key bootcamp.com.key --cacert sock.inc.crt  https://httpbin.org:32431/get
+
+```
+
+apply the following file: 02-httpbin-deployment-MTLS.yaml
+
