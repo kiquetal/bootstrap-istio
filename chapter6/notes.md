@@ -102,3 +102,12 @@ curl -v -HHost:httpbin.org --connect-to "httpbin.org:32431:192.168.59.100" --cac
 
 apply the following file: 02-httpbin-deployment-MTLS.yaml
 
+see the content of the gateway!
+
+for testing
+
+kubectl create -n istio-system secret generic httpbin-credential --from-file=tls.key=httpbin.org.key --from-file=tls.crt=httpbin.org.crt --from-file=ca.crt=sock.inc.crt
+
+
+curl -v -HHost:httpbin.org --connect-to "httpbin.org:32431:192.168.59.100" --cacert sock.inc.crt --cert bootstrapistio.packt.com.crt --key bootstrapistio.packt.com.key https://httpbin.org:32431/get
+
