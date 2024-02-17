@@ -1,0 +1,12 @@
+apiVersion: security.istio.io/v1beta1
+kind: RequestAuthentication
+metadata:
+  name: keycloak
+  namespace: chapter6
+spec:
+  selector:
+    matchLabels:
+      app: httpbin
+  jwtRules:
+  - issuer:  "http://192.168.76.2:30946/realms/sandbox"
+    jwksUri: "http://192.168.76.2:30946/realms/sandbox/protocol/openid-connect/certs"

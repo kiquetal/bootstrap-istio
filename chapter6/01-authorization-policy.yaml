@@ -1,0 +1,13 @@
+apiVersion: security.istio.io/v1beta1
+kind: AuthorizationPolicy
+metadata:
+  name: authpolicy
+  namespace: chapter6
+spec:
+  selector:
+    matchLabels:
+      app: httpbin
+  rules:
+  - from:
+    - source:
+        requestPrincipals: ["*"]
