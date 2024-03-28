@@ -84,7 +84,7 @@ openssl x509 -req -sha256 -days 365 -CA sock.inc.crt -CAkey sock.inc.key -set_se
 
 # Add the secret to the istio
 
-kubectl create -n istio-system secret tls httpbin-credential --from-file=tls.crt=httpbin.org.crt --from-file=tls.key=httpbin.org.key --from-file=ca.crt=sock.inc.crt
+kubectl create -n istio-system secret generic httpbin-credential --from-file=tls.crt=httpbin.org.crt --from-file=tls.key=httpbin.org.key --from-file=ca.crt=sock.inc.crt
 
 # Create the client to test the connection
 
